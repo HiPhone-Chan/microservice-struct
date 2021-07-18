@@ -1,0 +1,14 @@
+#server:
+#  servlet:
+#    context-path: /service1
+
+spring:
+   profiles:
+      active: war
+      include:
+        - prod
+   cloud:
+      consul:
+        discovery:
+#           health-check-path: ${server.servlet.context-path}/management/health
+           port: ${server.port}

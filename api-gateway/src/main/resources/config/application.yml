@@ -1,0 +1,122 @@
+
+
+# See https://github.com/Netflix/Hystrix/wiki/Configuration
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+             timeoutInMilliseconds: 10000
+
+management:
+  endpoints:
+    web:
+      base-path: /management
+      exposure:
+        include: ['configprops', 'env', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump']
+  endpoint:
+    health:
+      show-details: when-authorized
+      roles: 'ROLE_ADMIN'
+
+spring:
+  application:
+    name: gateway
+  main:
+    banner-mode: 'off'
+    allow-bean-definition-overriding: true
+  cloud:
+    consul:
+      discovery:
+        health-check-path: /management/health
+        instance-id: gateway:${spring.application.instance-id:${random.value}}
+        service-name: gateway
+      config:
+        watch:
+          enabled: false
+    gateway:
+      default-filters:
+        - JWTRelay
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+          predicates:
+            - name: Path
+              args:
+                pattern: "'/services/'+serviceId.toLowerCase()+'/**'"
+          filters:
+            - name: RewritePath
+              args:
+                regexp: "'/services/' + serviceId.toLowerCase() + '/(?<remaining>.*)'"
+                replacement: "'/${remaining}'"
+      httpclient:
+        pool:
+          max-connections: 1000
+  profiles:
+    # The commented value for `active` can be replaced with valid Spring profiles to load.
+    # Otherwise, it will be filled in by maven when building the JAR file
+    # Either way, it can be overridden by `--spring.profiles.active` value passed in the commandline or `-Dspring.profiles.active` set in `JAVA_OPTS`
+    active: #spring.profiles.active#
+  jmx:
+    enabled: false
+  messages:
+    basename: i18n/messages
+  servlet:
+    multipart:
+      enabled: true
+      max-request-size: 500MB
+      max-file-size: 300MB
+  task:
+    execution:
+      thread-name-prefix: gateway-task-
+      pool:
+        core-size: 2
+        max-size: 50
+        queue-capacity: 10000
+    scheduling:
+      thread-name-prefix: gateway-scheduling-
+      pool:
+        size: 2
+  thymeleaf:
+    mode: HTML
+  output:
+    ansi:
+      enabled: detect
+
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+
+# Properties to be exposed on the /info management endpoint
+info:
+  # Comma separated list of profiles that will trigger the ribbon to show
+  display-ribbon-on-profiles: 'dev'
+
+app:
+  clientApp:
+    name: 'gatewayApp'
+  security:
+    authentication:
+      jwt:
+      # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
+        base64-secret: MDBhNWIzODlmODI2YzcwOWE5MzA4OWM2MTE0NWM3YWFmYjNhNzU1MTRjNTJiMjU5ZDg0YmVkNmQ5Yjk5NWJmNGEyMjk0YzA2OTc5ODRkYWRkMGFlNTQ0ZGZmZDQ5ZjQ1ZWFlMzY4ZGU5ODlhYmRiYzM4ZjAyOGNjM2RmNGIwODM=
+      # openssl rand -hex 32
+        secret: 65a86f56429a36cbbb9f0cf3e5fb82ea45e3c766d5d3572ad248710f48860a02
+        token-validity-in-seconds: 86400
+        token-validity-in-seconds-for-remember-me: 2592000
+  api-docs:
+    default-include-pattern: ${server.servlet.context-path:}/api/.*
+    management-include-pattern: ${server.servlet.context-path:}/management/.*
+    title: API
+    description: API documentation
+    version: 0.0.1
+    terms-of-service-url:
+    contact-name:
+    contact-url:
+    contact-email:
+    license: unlicensed
+    license-url:

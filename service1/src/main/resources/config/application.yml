@@ -1,0 +1,128 @@
+
+feign:
+  hystrix:
+    enabled: true
+  # client:
+  #     config:
+  #         default:
+  #             connectTimeout: 5000
+  #             readTimeout: 5000
+hystrix:
+  shareSecurityContext: true
+  metrics:
+    polling-interval-ms: 2000
+
+management:
+  endpoints:
+    web:
+      base-path: /management
+      exposure:
+        include: ['configprops', 'env', 'health', 'info', 'jhimetrics', 'logfile', 'loggers', 'prometheus', 'threaddump']
+  endpoint:
+    health:
+      show-details: when-authorized
+      roles: 'ROLE_ADMIN'
+
+spring:
+  main:
+    banner-mode: 'off'
+    allow-bean-definition-overriding: true
+  application:
+    name: service1
+  cloud:
+    consul:
+      discovery:
+        health-check-path: /management/health
+        instance-id: feedback:${spring.application.instance-id:${random.value}}
+        service-name: service1
+      config:
+        watch:
+          enabled: false
+  profiles:
+    # The commented value for `active` can be replaced with valid Spring profiles to load.
+    # Otherwise, it will be filled in by maven when building the JAR file
+    # Either way, it can be overridden by `--spring.profiles.active` value passed in the commandline or `-Dspring.profiles.active` set in `JAVA_OPTS`
+    active: #spring.profiles.active#
+    group:
+      dev:
+        - dev
+        - api-docs
+  jmx:
+    enabled: false
+  data:
+    jpa:
+      repositories:
+        bootstrap-mode: deferred
+  jpa:
+    open-in-view: false
+    generate-ddl: true
+    properties:
+      "[hibernate.jdbc.time_zone]": UTC
+      "[hibernate.id.new_generator_mappings]": true
+      "[hibernate.connection.provider_disables_autocommit]": true
+#      "[hibernate.cache.use_second_level_cache]": true
+#      "[hibernate.cache.use_query_cache]": false
+      "[hibernate.generate_statistics]": false
+      # modify batch size as necessary
+      "[hibernate.jdbc.batch_size]": 25
+      "[hibernate.order_inserts]": true
+      "[hibernate.order_updates]": true
+      "[hibernate.query.fail_on_pagination_over_collection_fetch]": true
+      "[hibernate.query.in_clause_parameter_padding]": true
+#      "[hibernate.cache.region.factory_class]": com.hazelcast.hibernate.HazelcastCacheRegionFactory
+#      "[hibernate.cache.use_minimal_puts]": true
+#      "[hibernate.cache.hazelcast.instance_name]": service
+#      "[hibernate.cache.hazelcast.use_lite_member]": true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+  messages:
+    basename: i18n/messages
+  servlet:
+    multipart:
+      enabled: true
+      max-request-size: 500MB
+      max-file-size: 300MB
+  task:
+    execution:
+      thread-name-prefix: service1-task-
+      pool:
+        core-size: 2
+        max-size: 50
+        queue-capacity: 10000
+    scheduling:
+      thread-name-prefix: feedback-scheduling-
+      pool:
+        size: 2
+
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+
+app:
+  security:
+    authentication:
+      jwt:
+       # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
+        base64-secret: MDBhNWIzODlmODI2YzcwOWE5MzA4OWM2MTE0NWM3YWFmYjNhNzU1MTRjNTJiMjU5ZDg0YmVkNmQ5Yjk5NWJmNGEyMjk0YzA2OTc5ODRkYWRkMGFlNTQ0ZGZmZDQ5ZjQ1ZWFlMzY4ZGU5ODlhYmRiYzM4ZjAyOGNjM2RmNGIwODM=
+      # openssl rand -hex 32
+        secret: 65a86f56429a36cbbb9f0cf3e5fb82ea45e3c766d5d3572ad248710f48860a02
+        token-validity-in-seconds: 86400
+        token-validity-in-seconds-for-remember-me: 2592000
+    content-security-policy: "default-src 'self'; frame-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:"
+  api-docs:
+    default-include-pattern: ${server.servlet.context-path:}/api/.*
+    management-include-pattern: ${server.servlet.context-path:}/management/.*
+    title: API
+    description: API documentation
+    version: 0.0.1
+    terms-of-service-url:
+    contact-name:
+    contact-url:
+    contact-email:
+    license: unlicensed
+    license-url:

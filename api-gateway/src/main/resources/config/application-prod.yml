@@ -1,0 +1,50 @@
+
+logging:
+  level:
+    ROOT: INFO
+    "[com.chf.gateway]": INFO
+
+management:
+  metrics:
+    export:
+      prometheus:
+        enabled: false
+
+spring:
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+  cloud:
+    consul:
+      discovery:
+        prefer-ip-address: true
+      host: localhost
+      port: 8500
+  r2dbc:
+    url: r2dbc:mysql://localhost:3306/app-uua?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password: root
+  thymeleaf:
+    cache: true
+  zipkin: # Use the "zipkin" Maven profile to have the Spring Cloud Zipkin dependencies
+    base-url: http://localhost:9411
+    enabled: false
+    locator:
+      discovery:
+        enabled: true
+
+server:
+  port: 8081
+  shutdown: graceful
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css, application/javascript, application/json
+    min-response-size: 1024
+   
+app:
+  http:
+    cache: # Used by the CachingHttpHeadersFilter
+      timeToLiveInDays: 1461
+      
